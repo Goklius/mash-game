@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MASH - Juego de Saltar Obstáculos</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
+            font-family: 'Arial', sans-serif;
+        }
+        canvas {
+            display: block;
+            background: #87CEFA;
+        }
+        .btn-retry {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 10px;
+            background-color: #ff6347;
+            border: none;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .btn-retry:hover {
+            background-color: #ff4500;
+        }
+    </style>
+</head>
+<body>
+
+<button class="btn-retry" onclick="restartGame()">Reintentar</button>
+<canvas id="gameCanvas"></canvas>
+
+<script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const soldierHelmet = new Image();
+    soldierHelmet.src = "https://example.com/helmet.png"; // Reemplaza esta URL con una imagen de un casco verde
+    let gameOver = false;
+    let score = 0;
+
+    // Tamaño del canvas
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // Personaje
+    let soldier = {
+        x: 50,
+        y: canvas.height - 120,
+        width: 50,
+        height: 50,
+        jumpHeight: 0,
+        gravity: 1,
+        jumpSpeed: -20,
+        velocity: 0,
+        jumping: false
+    };
+
+    // Obstáculos
+    let obstacles = [];
+    let obstacleSpeed = 5;
+    
+    // Función para reiniciar el juego
+    function restartGame() {
+        gameOver = false;
+        score = 0;
+        soldier.y = canvas.height - 120;
+        soldier.jumpHeight = 0;
+        obstacles = [];
+        obstacleSpeed = 5;
+        update();
+    }
+
+    // Crear obstáculos
+    function createObstacle() {
+        let obstacleHeight = Math.floor(Math.random() * (canvas.height / 2)) + 30;
+        let obstacle = {
+            x: canvas.width,
+            y: canvas.height - obstacleHeight,
+            width: 50,
+            height: obstacleHeight
+        };
+        obstacles.push(obstacle);
+    }
+
+    // Mover obstáculos
+    function moveObstacles() {
+        for (let i = 0; i < obstacles.length; i++) {
+            obstacles[i].x -= obstacleSpeed;
+            if (obstacles[i].x + obstacles[i].width < 0) {
+                obstacles.splice(i, 1);
+                score++;
+                break;
+            }
+        }
+    }
+
+    // Dibujar el personaje y obstáculos
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Dibujar personaje
+        ctx.drawImage(soldierHelmet, soldier.x, soldier.y, soldier.width, soldier.height);
+
+        // Dibujar obstáculos
+        for (let i = 0; i < obstacles.length; i++) {
+            ctx.fillStyle = "brown";
+            ctx.fillRect(obstacles[i].x, obstacles[i].y, obstacles[i].width, obstacles[i].height);
+        }
+
+        // Mostrar puntuación
+        ctx.fillStyle = "black";
+        ctx.font = "30px Arial";
+        ctx.fillText("Puntuación: " + score, 20, 40);
+
+        if (gameOver) {
+            ctx.fillText("¡Juego Terminado!", canvas.width / 2 - 100, canvas.height / 2);
+        }
+    }
+
+    // Control de salto
+    function jump() {
+        if (!soldier.jumping) {
+            soldier.velocity = soldier.jumpSpeed;
+            soldier.jumping = true;
+        }
+    }
+
+    // Actualizar juego
+    function update() {
+        if (!gameOver) {
+            soldier.y += soldier.velocity;
+            soldier.velocity += soldier.gravity;
+
+            if (soldier.y >= canvas.height - 120) {
+                soldier.y = canvas.height - 120;
+                soldier.jumping = false;
+            }
+
+            moveObstacles();
+            draw();
+            requestAnimationFrame(update);
+        }
+    }
+
+    // Comprobar colisiones
+    function checkCollisions() {
+        for (let i = 0; i < obstacles.length; i++) {
+            if (soldier.x + soldier.width > obstacles[i].x && soldier.x < obstacles[i].x + obstacles[i].width) {
+                if (soldier.y + soldier.height > obstacles[i].y) {
+                    gameOver = true;
+                }
+            }
+        }
+    }
+
+    // Evento de salto
+    document.addEventListener("keydown", function (e) {
+        if (e.code === "Space") {
+            jump();
+        }
+    });
+
+    // Crear obstáculos cada 3 segundos
+    setInterval(createObstacle, 3000);
+
+    // Comprobar colisiones y actualizar juego
+    setInterval(checkCollisions, 100);
+
+    // Iniciar el juego
+    update();
+</script>
+
+</body>
+</html>
